@@ -10,14 +10,14 @@ def scrape_indeed_jobs(query, city=""):
     cards = soup.select(".result") or soup.select(".tapItem")
 
     for card in cards:
-        title_el = card.select_one("h2.jobTitle span")
-        company_el = card.select_one(".companyName")
-        link_el = card.select_one("a[href*='/rc/clk']")
-        if title_el and link_el:
+        title = card.select_one("h2.jobTitle span")
+        company = card.select_one(".companyName")
+        link = card.select_one("a[href*='/rc/clk']")
+        if title and link:
             jobs.append({
-                "title": title_el.text.strip(),
-                "company": company_el.text.strip() if company_el else "Unknown",
-                "link": "https://pk.indeed.com" + link_el['href'],
+                "title": title.text.strip(),
+                "company": company.text.strip() if company else "Unknown",
+                "link": "https://pk.indeed.com" + link['href'],
                 "source": "Indeed"
             })
     return jobs
@@ -31,13 +31,13 @@ def scrape_mustakbil_jobs(query, city=""):
     listings = soup.select(".job-opening")
 
     for job in listings:
-        title_el = job.select_one("h3.job-title a")
-        company_el = job.select_one(".company-name")
-        if title_el:
+        title = job.select_one("h3.job-title a")
+        company = job.select_one(".company-name")
+        if title:
             jobs.append({
-                "title": title_el.text.strip(),
-                "company": company_el.text.strip() if company_el else "Unknown",
-                "link": "https://www.mustakbil.com" + title_el['href'],
+                "title": title.text.strip(),
+                "company": company.text.strip() if company else "Unknown",
+                "link": "https://www.mustakbil.com" + title['href'],
                 "source": "Mustakbil"
             })
     return jobs
