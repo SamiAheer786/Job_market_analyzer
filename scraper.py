@@ -1,49 +1,44 @@
 import requests
 from bs4 import BeautifulSoup
 
-def scrape_rozee_jobs(query, location=""):
+def scrape_indeed_jobs(query, location=""):
     jobs = []
-    query_formatted = query.replace(' ', '-').lower()
-    location_formatted = location.replace(' ', '-').lower()
-    
-    if location:
-        url = f"https://www.rozee.pk/job-search/{query_formatted}-jobs-in-{location_formatted}"
-    else:
-        url = f"https://www.rozee.pk/job-search/{query_formatted}-jobs"
-    
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    res = requests.get(url, headers=headers)
-    soup = BeautifulSoup(res.text, 'html.parser')
+    query_formatted = query.replace(" ", "+")
+    location_formatted = location.replace(" ", "+")
+    url = f"https://pk.indeed.com/jobs?q={query_formatted}&l={location_formatted}"
 
-    job_blocks = soup.select('.job-search-list .job')
-    for job in job_blocks:
-        title_tag = job.select_one('.job-title a')
-        if not title_tag:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.google.com/"
+    }
+
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    job_cards = soup.select(".result") or soup.select(".tapItem")
+    for card in job_cards:
+        title_tag = card.select_one("h2.jobTitle span")
+        title = title_tag.text.strip() if title_tag else "No Title"
+
+        link_tag = card.find("a", href=True)
+        if link_tag and "/rc/clk" in link_tag["href"]:
+            link = "https://pk.indeed.com" + link_tag["href"]
+        else:
             continue
-        title = title_tag.get_text(strip=True)
-        link = "https://www.rozee.pk" + title_tag.get('href')
 
-        # Experience Estimation
-        exp_tag = job.select_one('.job-metadata span')
-        experience_text = exp_tag.get_text(strip=True) if exp_tag else "Not Mentioned"
+        company_tag = card.select_one(".companyName")
+        company = company_tag.text.strip() if company_tag else "Unknown Company"
 
         jobs.append({
-            'title': title,
-            'link': link,
-            'experience_text': experience_text
+            "title": f"{title} at {company}",
+            "link": link,
+            "experience_text": "Not Mentioned"
         })
-    
+
     return jobs
 
 def filter_by_experience(jobs, level):
-    level = level.lower()
-    filtered = []
-    for job in jobs:
-        exp = job['experience_text'].lower()
-        if level == 'fresh' and ("0" in exp or "fresh" in exp):
-            filtered.append(job)
-        elif level == 'intermediate' and any(x in exp for x in ['2', '3', '4', 'mid']):
-            filtered.append(job)
-        elif level == 'expert' and any(x in exp for x in ['5', '6', '7', '8', 'senior', 'expert']):
-            filtered.append(job)
-    return filtered if filtered else jobs  # fallback to all if none matched
+    # Since Indeed doesn't provide experience data on search pages,
+    # skip filtering and return all jobs
+    return jobs
