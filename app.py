@@ -1,27 +1,21 @@
 import streamlit as st
-from scraper import scrape_all_jobs_for_students
+from scraper import scrape_indeed_jobs
 
-st.set_page_config(page_title="🎓 Student Internship Finder", layout="centered")
-st.title("🎓 Student Internship & Fresh Job Finder – Pakistan")
-st.markdown("Designed for students—search internships, trainee roles & fresh graduate jobs!")
+st.set_page_config(page_title="Student Job Finder Debug", layout="centered")
+st.title("🔍 Debugged Internship/Entry Job Finder")
 
-query = st.text_input("🎯 Role or Field (e.g. Software Intern, Marketing Trainee)")
-city = st.text_input("📍 City (Optional - e.g. Lahore, Karachi)")
+query = st.text_input("Role (e.g. software intern)")
+city = st.text_input("City (e.g. Lahore)", "")
 
-if st.button("🔍 Search Opportunities"):
+if st.button("Search"):
     if not query:
-        st.error("Please enter a role or field.")
+        st.error("Please enter a role.")
     else:
-        with st.spinner("🔎 Searching multiple portals..."):
-            results = scrape_all_jobs_for_students(query, city)
-
-        if results:
-            st.success(f"✅ Found {len(results)} opportunities!")
-            for job in results:
-                st.markdown(
-                    f"**[{job['title']}]({job['link']})**  \n"
-                    f"🏢 {job['company']} • *Source: {job['source']}*"
-                )
-                st.markdown("---")
+        st.write("Searching Indeed…")
+        jobs = scrape_indeed_jobs(query, city)
+        st.write(f"Found {len(jobs)} raw results.")
+        if jobs:
+            for job in jobs:
+                st.markdown(f"**[{job['title']}]({job['link']})** — {job['company']}")
         else:
-            st.warning("😓 No opportunities found. Try adjusting keyword or city.")
+            st.warning("No opportunities found — check debug logs or try other keywords.")
